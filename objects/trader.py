@@ -123,6 +123,11 @@ class TraderVariablesDistribution:
         self.covariance_matrix = covariance_matrix
         self.active_orders = []
 
+        # The next parameters are only used for a robustness check
+        self.hypothetical_money = [money]
+        self.hypothetical_stocks = [stocks]
+        self.hypothetical_wealth = [money + stocks * init_price]
+
 
 class TraderParametersDistribution:
     """
