@@ -197,7 +197,7 @@ def volatility_inequality_model2(traders, orderbook, parameters, seed=1):
     return traders, orderbook
 
 
-def volatility_inequality_model_equilibrium(traders, orderbook, parameters, seed=1):
+def volatility_inequality_model_equilibrium(traders, orderbook, parameters, seed=1, cancel_all_orders=False):
     """
     The main model function of distribution model where trader stocks are tracked.
     :param traders: list of Agent objects
@@ -225,6 +225,14 @@ def volatility_inequality_model_equilibrium(traders, orderbook, parameters, seed
             trader.var.money.append(trader.var.money[-1])
             trader.var.stocks.append(trader.var.stocks[-1])
             trader.var.wealth.append(trader.var.money[-1] + trader.var.stocks[-1] * orderbook.tick_close_price[-1]) # TODO debug
+
+            # TODO what if I delete active orders...
+            # Cancel any active orders
+            if trader.var.active_orders and cancel_all_orders:
+                for order in trader.var.active_orders:
+                    orderbook.cancel_order(order)
+                trader.var.active_orders = []
+
 
         # sort the traders by wealth to
         traders_by_wealth.sort(key=lambda x: x.var.wealth[-1], reverse=True)
@@ -294,6 +302,7 @@ def volatility_inequality_model_equilibrium(traders, orderbook, parameters, seed
 
         # Clear and update order-book history
         orderbook.cleanse_book()
+
         orderbook.fundamental = fundamental
 
         # determine that a steady state has been reached because no volume for multiple periods & inequality has hit a certain level
@@ -305,11 +314,11 @@ def volatility_inequality_model_equilibrium(traders, orderbook, parameters, seed
         if tick > 211:
             previous_volumes = sum([sum(x) for x in orderbook.transaction_volumes_history[-10:]])
 
-        if (gini(wealth) > 0.80 and previous_volumes == 0) or tick > 10000:
+        if gini(wealth) > 0.9 or tick > 90000:
             equilibrium_found = True
             print('Simulation ends in tick ', tick, ' with Gini ', gini(wealth))
 
-    return traders, orderbook
+    return traders, orderbook, gini(wealth), tick
 
 
 def volatility_inequality_model_reset_wealth(traders, orderbook, parameters, seed=1):

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def gini(array):
     """
     Calculate the Gini coefficient of a numpy array.
