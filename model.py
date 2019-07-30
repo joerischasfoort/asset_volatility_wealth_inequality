@@ -314,7 +314,7 @@ def volatility_inequality_model_equilibrium(traders, orderbook, parameters, seed
         if tick > 211:
             previous_volumes = sum([sum(x) for x in orderbook.transaction_volumes_history[-10:]])
 
-        if gini(wealth) > 0.9 or tick > 90000:
+        if gini(wealth) > 0.9 or previous_volumes < 30 or tick > 90000:
             equilibrium_found = True
             print('Simulation ends in tick ', tick, ' with Gini ', gini(wealth))
 
