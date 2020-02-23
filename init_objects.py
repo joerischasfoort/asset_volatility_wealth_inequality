@@ -45,7 +45,7 @@ def init_objects(parameters, seed):
                                                init_money, init_stocks, init_covariance_matrix,
                                                parameters['fundamental_value'])
 
-        lft_params = TraderParameters(parameters["base_risk_aversion"], parameters['spread_max']) # parameters['horizon'], todo reinstate?
+        lft_params = TraderParameters(parameters["base_risk_aversion"], parameters['spread_max'], parameters['horizon'])
         lft_expectations = TraderExpectations(parameters['fundamental_value'])
         traders.append(Trader(idx, lft_vars, lft_params, lft_expectations))
 
@@ -89,19 +89,23 @@ def init_objects_distr(parameters, seed):
     historical_stock_returns = np.random.normal(0, parameters["std_fundamental"], max_horizon)
 
     for idx in range(n_traders):
-        weight_fundamentalist = list(agent_points[idx]).count('f') / float(len(agent_points[idx]))
-        weight_chartist = list(agent_points[idx]).count('c') / float(len(agent_points[idx]))
-        weight_random = list(agent_points[idx]).count('r') / float(len(agent_points[idx]))
+        weights = []
+        for typ in ['f', 'c', 'r']:
+            weights.append(list(agent_points[idx]).count(typ) / float(len(agent_points[idx])))
 
         init_stocks = int(np.random.uniform(0, parameters["init_stocks"]))
         init_money = np.random.uniform(0, (parameters["init_stocks"] * parameters['fundamental_value']))
 
-        c_share_strat = div0(weight_chartist, (weight_fundamentalist + weight_chartist))
+        # If there are chartists (c) & fundamentalists (f) in the model, keep track of the fraction between c & f.
+        if weights[2] < 1.0:
+            c_share_strat = div0(weights[1], (weights[0] + weights[1]))
+        else:
+            c_share_strat = 0.0
 
         # initialize co_variance_matrix
         init_covariance_matrix = calculate_covariance_matrix(historical_stock_returns, parameters["std_fundamental"])
 
-        lft_vars = TraderVariablesDistribution(weight_fundamentalist, weight_chartist, weight_random, c_share_strat,
+        lft_vars = TraderVariablesDistribution(weights[0], weights[1], weights[2], c_share_strat,
                                                init_money, init_stocks, init_covariance_matrix,
                                                parameters['fundamental_value'])
 

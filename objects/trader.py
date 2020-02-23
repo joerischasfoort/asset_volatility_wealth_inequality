@@ -75,14 +75,14 @@ class TraderParameters:
     Holds the the trader parameters for the distribution model
     """
 
-    def __init__(self, risk_aversion, max_spread): #TODO reinstate horizon?
+    def __init__(self, risk_aversion, max_spread, ref_horizon): #TODO reinstate horizon?
         """
         Initializes trader parameters
         :param ref_horizon: integer horizon over which the trader can observe the past
         :param max_spread: Maximum spread at which the trader will submit orders to the book
         :param risk_aversion: float aversion to price volatility
         """
-        #self.horizon = ref_horizon
+        self.horizon = ref_horizon
         self.risk_aversion = risk_aversion
         self.spread = max_spread * np.random.rand()
 

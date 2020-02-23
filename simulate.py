@@ -27,7 +27,7 @@ parameters = {'trader_sample_size': 10,
 traders, orderbook = init_objects_distr(parameters, seed=0)
 
 # 3 simulate model
-traders, orderbook = volatility_inequality_model_equilibrium(traders, orderbook, parameters, seed=0)
+traders, orderbook = volatility_inequality_model2(traders, orderbook, parameters, seed=0)
 
 
 print("The simulations took", time.time() - start_time, "to run")
