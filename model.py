@@ -1,8 +1,6 @@
-import random
 import numpy as np
 from functions.portfolio_optimization import *
 from functions.helpers import calculate_covariance_matrix, div0, ornstein_uhlenbeck_evolve
-from functions.inequality import gini
 
 
 def volatility_inequality_model(traders, orderbook, parameters, seed=1):
@@ -14,46 +12,23 @@ def volatility_inequality_model(traders, orderbook, parameters, seed=1):
     :param seed: integer seed to initialise the random number generators
     :return: list of simulated Agent objects, object simulated Order book
     """
-    random.seed(seed)
+    print('Start of simulation ', seed)
+
+    #random.seed(seed)
     np.random.seed(seed)
-    fundamental = [parameters["init_price"]]
-    orderbook.tick_close_price.append(fundamental[-1])
+    orderbook.tick_close_price.append(parameters["init_price"])
 
-    traders_by_wealth = [t for t in traders]
-
-    #for tick in range(parameters['horizon'] + 1, parameters["ticks"] + parameters['horizon'] + 1):# for init history
     for tick in range(parameters['ticks'] + 1, parameters["ticks"] + parameters['ticks'] + 1):  # for init history
-        if tick == parameters['ticks'] + 1:
-            print('Start of simulation ', seed)
-
         # update money and stocks history for agents
         for trader in traders:
             trader.var.money.append(trader.var.money[-1])
             trader.var.stocks.append(trader.var.stocks[-1])
-            trader.var.wealth.append(trader.var.money[-1] + trader.var.stocks[-1] * orderbook.tick_close_price[-1]) # TODO debug
-
-        # sort the traders by wealth to
-        traders_by_wealth.sort(key=lambda x: x.var.wealth[-1], reverse=True)
-
-        # evolve the fundamental value via random walk process
-        fundamental.append(fundamental[-1])
-        # fundamental.append(max(
-        #     ornstein_uhlenbeck_evolve(parameters["fundamental_value"], fundamental[-1], parameters["std_fundamental"],
-        #                               parameters['mean_reversion'], seed), 0.1))
-
-        # allow for multiple trades in one day
-        #for turn in range(parameters["trades_per_tick"]):
-        # select random sample of active traders
-        active_traders = random.sample(traders, int((parameters['trader_sample_size'])))
+            trader.var.wealth.append(trader.var.money[-1] + trader.var.stocks[-1] * orderbook.tick_close_price[-1])
 
         mid_price = np.mean([orderbook.highest_bid_price, orderbook.lowest_ask_price])
-        fundamental_component = np.log(fundamental[-1] / mid_price)
-
         orderbook.returns[-1] = (mid_price - orderbook.tick_close_price[-2]) / orderbook.tick_close_price[-2]
-        chartist_component = np.cumsum(orderbook.returns[:-len(orderbook.returns) - 1:-1]
-                                       ) / np.arange(1., float(len(orderbook.returns) + 1))
 
-        for trader in active_traders:
+        for trader in traders:
             # Cancel any active orders
             if trader.var.active_orders:
                 for order in trader.var.active_orders:
@@ -61,24 +36,15 @@ def volatility_inequality_model(traders, orderbook, parameters, seed=1):
                 trader.var.active_orders = []
 
             # Update trader specific expectations
-            noise_component = parameters['std_noise'] * np.random.randn()
-
-            # Expectation formation
-            trader.exp.returns['stocks'] = (
-                    trader.var.weight_fundamentalist[-1] * np.divide(1, float(trader.par.horizon)) * fundamental_component +
-                    trader.var.weight_chartist[-1] * chartist_component[trader.par.horizon - 1] +
-                    trader.var.weight_random[-1] * noise_component)
-            fcast_price = mid_price * np.exp(trader.exp.returns['stocks'])
-            # trader.var.covariance_matrix = calculate_covariance_matrix(orderbook.returns[-trader.par.horizon:],
-            #                                                            parameters["std_fundamental"])
+            trader.exp.returns['stocks'] = parameters['white_noise'] * np.random.randn()
             trader.var.covariance_matrix = calculate_covariance_matrix(orderbook.returns[-trader.par.horizon:],
-                                                                       parameters["std_noise"])
+                                                                       parameters["white_noise"])
 
-            # employ portfolio optimization algo
+            # employ portfolio optimization algorithm
             ideal_trader_weights = portfolio_optimization(trader, tick)
 
             # Determine price and volume
-            trader_price = np.random.normal(fcast_price, trader.par.spread)
+            trader_price = mid_price * np.exp(trader.exp.returns['stocks'])
             position_change = (ideal_trader_weights['stocks'] * (trader.var.stocks[-1] * trader_price + trader.var.money[-1])
                       ) - (trader.var.stocks[-1] * trader_price)
             volume = int(div0(position_change, trader_price))
@@ -91,7 +57,7 @@ def volatility_inequality_model(traders, orderbook, parameters, seed=1):
                 ask = orderbook.add_ask(trader_price, -volume, trader)
                 trader.var.active_orders.append(ask)
 
-        # Match orders in the order-book
+        # Match any orders in the order-book
         while True:
             matched_orders = orderbook.match_orders()
             if matched_orders is None:
@@ -102,7 +68,6 @@ def volatility_inequality_model(traders, orderbook, parameters, seed=1):
 
         # Clear and update order-book history
         orderbook.cleanse_book()
-        orderbook.fundamental = fundamental
 
     return traders, orderbook
 

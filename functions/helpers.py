@@ -103,7 +103,6 @@ def organise_data(obs, burn_in_period=0):
     :param burn_in_period: integer period of observations which is discarded
     :return: Pandas DataFrames of prices, returns, autocorrelation in returns, autocorr_abs_returns, volatility, volume, fundamentals
     """
-    #burn_in_period = 100
     window = 20
     close_price = []
     returns = []
@@ -130,16 +129,16 @@ def organise_data(obs, burn_in_period=0):
         # volume
         volume.append([sum(volumes) for volumes in ob.transaction_volumes_history][burn_in_period:])
         # fundamentals
-        fundamentals.append(ob.fundamental[burn_in_period:])
+        #fundamentals.append(ob.fundamental[burn_in_period:])
     mc_prices = pd.DataFrame(close_price).transpose()
     mc_returns = pd.DataFrame(returns).transpose()
     mc_autocorr_returns = pd.DataFrame(autocorr_returns).transpose()
     mc_autocorr_abs_returns = pd.DataFrame(autocorr_abs_returns).transpose()
     mc_volatility = pd.DataFrame(returns_volatility).transpose()
     mc_volume = pd.DataFrame(volume).transpose()
-    mc_fundamentals = pd.DataFrame(fundamentals).transpose()
+    #mc_fundamentals = pd.DataFrame(fundamentals).transpose()
 
-    return mc_prices, mc_returns, mc_autocorr_returns, mc_autocorr_abs_returns, mc_volatility, mc_volume, mc_fundamentals
+    return mc_prices, mc_returns, mc_autocorr_returns, mc_autocorr_abs_returns, mc_volatility, mc_volume#, mc_fundamentals
 
 
 def hypothetical_series(starting_value, returns):

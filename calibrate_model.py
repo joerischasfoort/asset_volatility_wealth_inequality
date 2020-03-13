@@ -16,11 +16,9 @@ BURN_IN = 0
 CORES = NRUNS # set the amount of cores equal to the amount of runs
 
 problem = {
-  'num_vars': 2,
+  'num_vars': 1,
   'names': ['std_noise'],
-            #'w_random'],
-  'bounds': [[0.01, 0.99]]#,
-             #[0.02, 0.20]]
+  'bounds': [[0.01, 0.99]]
 }
 
 with open('hypercube.txt', 'r') as f:
@@ -32,12 +30,15 @@ UB = [x[1] for x in problem['bounds']]
 
 init_parameters = latin_hyper_cube[LATIN_NUMBER]
 
-params = {'trader_sample_size': 10, 'n_traders': 1000, 'init_stocks': 81, 'ticks': 604,
-              'fundamental_value': 1101.1096156039398, 'std_fundamental': 0.036138325335996965,
-              'base_risk_aversion': 0.7, 'spread_max': 0.004087, 'horizon': 211, 'std_noise': 0.01,
-              'w_random': 1.0, 'mean_reversion': 0.0, 'fundamentalist_horizon_multiplier': 1.0,
-              'strat_share_chartists': 0.0, 'mutation_intensity': 0.0, 'average_learning_ability': 0.0,
-              'trades_per_tick': 1}
+params = {
+    'ticks': 606,
+    'trader_sample_size': 10,
+    'n_traders': 50,
+    'init_stocks': 81,
+    'init_price': 1112.2356754564078,
+    'spread_max': 0.004087,
+    'std_noise': 0.05149715506250338,
+}
 
 
 def simulate_a_seed(seed_params):
@@ -52,27 +53,23 @@ def simulate_a_seed(seed_params):
     obs.append(orderbook)
 
     # store simulated stylized facts
-    mc_prices, mc_returns, mc_autocorr_returns, mc_autocorr_abs_returns, mc_volatility, mc_volume, mc_fundamentals = organise_data(
+    mc_prices, mc_returns, mc_autocorr_returns, mc_autocorr_abs_returns, mc_volatility, mc_volume = organise_data(
         obs, burn_in_period=BURN_IN)
 
     means = []
-    stds = []
     first_order_autocors = []
     for col in mc_returns:
         means.append(mc_returns[col][1:].mean())
-        #stds.append(mc_returns[col][1:].std())
         first_order_autocors.append(autocorrelation_returns(mc_returns[col][1:], 25))
 
     stylized_facts_sim = np.array([
         np.mean(means),
-        #np.mean(stds),
         np.mean(first_order_autocors),
     ])
 
     W = np.load('distr_weighting_matrix.npy')  # if this doesn't work, use: np.identity(len(stylized_facts_sim))
 
     empirical_moments = np.array([0.00283408, 0.00952201])
-    #empirical_moments = np.array([0.00283408, 0.03613833, 0.00952201])
 
     # calculate the cost
     cost = quadratic_loss_function(stylized_facts_sim, empirical_moments, W)
@@ -96,12 +93,15 @@ def pool_handler():
 
         # update params
         uncertain_parameters = dict(zip(problem['names'], new_input_params))
-        params = {'trader_sample_size': 10, 'n_traders': 1000, 'init_stocks': 81, 'ticks': 604,
-              'fundamental_value': 1101.1096156039398, 'std_fundamental': 0.036138325335996965,
-              'base_risk_aversion': 0.7, 'spread_max': 0.004087, 'horizon': 211, 'std_noise': 0.01,
-              'w_random': 1.0, 'mean_reversion': 0.0, 'fundamentalist_horizon_multiplier': 1.0,
-              'strat_share_chartists': 0.0, 'mutation_intensity': 0.0, 'average_learning_ability': 0.0,
-              'trades_per_tick': 1}
+        params = {
+            'ticks': 606,
+            'trader_sample_size': 10,
+            'n_traders': 50,
+            'init_stocks': 81,
+            'init_price': 1112.2356754564078,
+            'spread_max': 0.004087,
+            'std_noise': 0.05149715506250338,
+        }
         params.update(uncertain_parameters)
 
         list_of_seeds_params = [[seed, params] for seed in list_of_seeds]

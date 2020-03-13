@@ -24,7 +24,6 @@ class LimitOrderBook:
         """
         self.bids = []
         self.asks = []
-        self.order_expiration = order_expiration
         self.highest_bid_price = last_price - (spread_max / 2)
         self.lowest_ask_price = last_price + (spread_max / 2)
         self.tick_close_price = [np.mean([self.highest_bid_price, self.lowest_ask_price])]
@@ -39,10 +38,6 @@ class LimitOrderBook:
         self.transaction_volumes_history = []
         self.highest_bid_price_history = []
         self.lowest_ask_price_history = []
-
-        # historical sentiment in market data storage
-        self.sentiment = []
-        self.sentiment_history = []
 
     def add_bid(self, price, volume, agent):
         """
@@ -94,17 +89,6 @@ class LimitOrderBook:
         # store and clean recorded transaction volumes
         self.transaction_volumes_history.append(self.transaction_volumes)
         self.transaction_volumes = []
-
-        # story and clean sentiment data
-        self.sentiment_history.append(self.sentiment)
-        self.sentiment = []
-
-        # increase the age of all orders by 1
-        for book in [self.bids, self.asks]:
-            for order in book:
-                order.age += 1
-                if order.age > self.order_expiration:
-                    book.remove(order)
 
         # update current highest bid and lowest ask
         for order_type in ['bid', 'ask']:
@@ -195,7 +179,6 @@ class Order:
         self.owner = owner
         self.price = price
         self.volume = volume
-        self.age = 0
 
     def __lt__(self, other):
         """Allows comparison to other orders based on price"""
@@ -205,4 +188,4 @@ class Order:
         """
         :return: String representation of the order
         """
-        return 'Order_p={}_t={}_o={}_a={}'.format(self.price, self.order_type, self.owner, self.age)
+        return 'Order_p={}_t={}_o={}'.format(self.price, self.order_type, self.owner)
