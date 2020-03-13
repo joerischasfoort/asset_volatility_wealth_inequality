@@ -47,8 +47,8 @@ def simulate_a_seed(seed_params):
 
     obs = []
     # run model with parameters
-    traders, orderbook = init_objects_distr(params, seed)
-    traders, orderbook = volatility_inequality_model2(traders, orderbook, params, seed)
+    traders, orderbook = init_objects_model(params, seed)
+    traders, orderbook = volatility_inequality_model(traders, orderbook, params, seed)
     obs.append(orderbook)
 
     # store simulated stylized facts

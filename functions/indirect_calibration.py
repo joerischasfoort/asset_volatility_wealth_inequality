@@ -1,5 +1,5 @@
 from model import *
-from init_objects import init_objects_distr
+from init_objects import init_objects_model
 from functions.helpers import organise_data
 from functions.evolutionaryalgo import *
 
@@ -30,8 +30,8 @@ def model_performance(input_parameters):
     obs = []
     # run model with parameters
     for seed in range(n_runs):
-        traders, orderbook = init_objects_distr(params, seed)
-        traders, orderbook = volatility_inequality_model2(traders, orderbook, params, seed)
+        traders, orderbook = init_objects_model(params, seed)
+        traders, orderbook = volatility_inequality_model(traders, orderbook, params, seed)
         traders.append(traders)
         obs.append(orderbook)
 
