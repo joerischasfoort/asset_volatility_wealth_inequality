@@ -3,7 +3,6 @@ import time
 from multiprocessing import Pool
 import json
 import numpy as np
-import math
 
 np.seterr(all='ignore')
 
@@ -17,8 +16,8 @@ CORES = NRUNS # set the amount of cores equal to the amount of runs
 
 problem = {
   'num_vars': 1,
-  'names': ['std_noise'],
-  'bounds': [[0.01, 0.99]]
+  'names': ['white_noise'],
+  'bounds': [[0.01, 0.10]]
 }
 
 with open('hypercube.txt', 'r') as f:
@@ -31,14 +30,12 @@ UB = [x[1] for x in problem['bounds']]
 init_parameters = latin_hyper_cube[LATIN_NUMBER]
 
 params = {
-    'ticks': 606,
-    'trader_sample_size': 10,
-    'n_traders': 50,
-    'init_stocks': 81,
-    'init_price': 1112.2356754564078,
-    'spread_max': 0.004087,
-    'std_noise': 0.05149715506250338,
-}
+    "ticks": 614,
+    "n_traders": 20, # selected for comp efficiency
+    "init_stocks": int((21780000000 / 267.33) / float(1000000)), # market valuation of Vanguard S&P 500 / share price
+    "init_price": 1147.8213214905302, # average value of reference data
+    "white_noise": 0.05,
+         }
 
 
 def simulate_a_seed(seed_params):
@@ -56,20 +53,20 @@ def simulate_a_seed(seed_params):
     mc_prices, mc_returns, mc_autocorr_returns, mc_autocorr_abs_returns, mc_volatility, mc_volume = organise_data(
         obs, burn_in_period=BURN_IN)
 
-    means = []
+    stdevs = []
     first_order_autocors = []
     for col in mc_returns:
-        means.append(mc_returns[col][1:].mean())
+        stdevs.append(mc_returns[col][1:].std())
         first_order_autocors.append(autocorrelation_returns(mc_returns[col][1:], 25))
 
     stylized_facts_sim = np.array([
-        np.mean(means),
+        np.mean(stdevs),
         np.mean(first_order_autocors),
     ])
 
     W = np.load('distr_weighting_matrix.npy')  # if this doesn't work, use: np.identity(len(stylized_facts_sim))
 
-    empirical_moments = np.array([0.00283408, 0.00952201])
+    empirical_moments = np.array([0.03600149, 0.00970407])
 
     # calculate the cost
     cost = quadratic_loss_function(stylized_facts_sim, empirical_moments, W)
@@ -93,15 +90,11 @@ def pool_handler():
 
         # update params
         uncertain_parameters = dict(zip(problem['names'], new_input_params))
-        params = {
-            'ticks': 606,
-            'trader_sample_size': 10,
-            'n_traders': 50,
-            'init_stocks': 81,
-            'init_price': 1112.2356754564078,
-            'spread_max': 0.004087,
-            'std_noise': 0.05149715506250338,
-        }
+        params = {'ticks': 614,
+                  'n_traders': 20,
+                  'init_stocks': 81,
+                  'init_price': 1147.8213214905302,
+                  'white_noise': 0.05}
         params.update(uncertain_parameters)
 
         list_of_seeds_params = [[seed, params] for seed in list_of_seeds]
