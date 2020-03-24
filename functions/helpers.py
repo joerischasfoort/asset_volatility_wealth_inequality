@@ -161,7 +161,7 @@ def get_specific_bootstraps_moments(full_series, bootstrap_number):
 def confidence_interval(data, av):
     sample_stdev = np.std(data)
     sigma = sample_stdev/math.sqrt(len(data))
-    return stats.t.interval(alpha = 0.95, df= 24, loc=av, scale=sigma)
+    return stats.t.interval(alpha=0.95, df=24, loc=av, scale=sigma)
 
 
 def ornstein_uhlenbeck_evolve(init_level, previous_level, sigma, mean_reversion, seed):

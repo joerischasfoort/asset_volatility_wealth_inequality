@@ -14,11 +14,9 @@ NRUNS = 4
 BURN_IN = 0
 CORES = NRUNS # set the amount of cores equal to the amount of runs
 
-problem = {
-  'num_vars': 1,
-  'names': ['white_noise'],
-  'bounds': [[0.01, 0.10]]
-}
+problem = {'num_vars': 1,
+ 'names': ['white_noise'],
+ 'bounds': [[0.0007913977712213694, 0.07913977712213693]]}
 
 with open('hypercube.txt', 'r') as f:
     latin_hyper_cube = json.loads(f.read())
@@ -29,13 +27,11 @@ UB = [x[1] for x in problem['bounds']]
 
 init_parameters = latin_hyper_cube[LATIN_NUMBER]
 
-params = {
-    "ticks": 614,
-    "n_traders": 20, # selected for comp efficiency
-    "init_stocks": int((21780000000 / 267.33) / float(1000000)), # market valuation of Vanguard S&P 500 / share price
-    "init_price": 1147.8213214905302, # average value of reference data
-    "white_noise": 0.05,
-         }
+params = {'ticks': 251,
+ 'n_traders': 20,
+ 'init_stocks': 81,
+ 'init_price': 287.686015936255,
+ 'white_noise': 0.007913977712213693}
 
 
 def simulate_a_seed(seed_params):
@@ -66,7 +62,7 @@ def simulate_a_seed(seed_params):
 
     W = np.load('distr_weighting_matrix.npy')  # if this doesn't work, use: np.identity(len(stylized_facts_sim))
 
-    empirical_moments = np.array([0.03600149, 0.00970407])
+    empirical_moments = np.array([0.00791398, -0.01593133])
 
     # calculate the cost
     cost = quadratic_loss_function(stylized_facts_sim, empirical_moments, W)
@@ -90,11 +86,11 @@ def pool_handler():
 
         # update params
         uncertain_parameters = dict(zip(problem['names'], new_input_params))
-        params = {'ticks': 614,
+        params = {'ticks': 251,
                   'n_traders': 20,
                   'init_stocks': 81,
-                  'init_price': 1147.8213214905302,
-                  'white_noise': 0.05}
+                  'init_price': 287.686015936255,
+                  'white_noise': 0.007913977712213693}
         params.update(uncertain_parameters)
 
         list_of_seeds_params = [[seed, params] for seed in list_of_seeds]
