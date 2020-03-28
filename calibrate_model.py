@@ -11,14 +11,14 @@ start_time = time.time()
 # INPUT PARAMETERS
 LATIN_NUMBER = 0
 NRUNS = 4
-BURN_IN = 0
+BURN_IN = 62 #+2
 CORES = NRUNS # set the amount of cores equal to the amount of runs
 
 problem = {'num_vars': 1,
- 'names': ['white_noise'],
- 'bounds': [[0.0007913977712213694, 0.07913977712213693]]}
+           'names': ['white_noise'],
+           'bounds': [[0.0008704767401896479, 0.08704767401896478]]}
 
-with open('hypercube.txt', 'r') as f:
+with open('starting_param.txt', 'r') as f:
     latin_hyper_cube = json.loads(f.read())
 
 # Bounds
@@ -27,11 +27,13 @@ UB = [x[1] for x in problem['bounds']]
 
 init_parameters = latin_hyper_cube[LATIN_NUMBER]
 
-params = {'ticks': 251,
- 'n_traders': 20,
- 'init_stocks': 81,
- 'init_price': 287.686015936255,
- 'white_noise': 0.007913977712213693}
+params = {
+    'n_traders': 20,
+    'init_stocks': 100,
+    'ticks': 302,
+    'init_price': 13477.214092158467,
+    'white_noise': 0.008704767401896478
+}
 
 
 def simulate_a_seed(seed_params):
@@ -60,9 +62,9 @@ def simulate_a_seed(seed_params):
         np.mean(first_order_autocors),
     ])
 
-    W = np.load('distr_weighting_matrix.npy')  # if this doesn't work, use: np.identity(len(stylized_facts_sim))
+    W = np.load('distr_weighting_matrix.npy')
 
-    empirical_moments = np.array([0.00791398, -0.01593133])
+    empirical_moments = np.array([0.00870477, -0.01048742])
 
     # calculate the cost
     cost = quadratic_loss_function(stylized_facts_sim, empirical_moments, W)
@@ -86,11 +88,13 @@ def pool_handler():
 
         # update params
         uncertain_parameters = dict(zip(problem['names'], new_input_params))
-        params = {'ticks': 251,
-                  'n_traders': 20,
-                  'init_stocks': 81,
-                  'init_price': 287.686015936255,
-                  'white_noise': 0.007913977712213693}
+        params = {
+            'n_traders': 20,
+            'init_stocks': 100,
+            'ticks': 302,
+            'init_price': 13477.214092158467,
+            'white_noise': 0.008704767401896478
+        }
         params.update(uncertain_parameters)
 
         list_of_seeds_params = [[seed, params] for seed in list_of_seeds]
@@ -99,7 +103,7 @@ def pool_handler():
 
         return np.mean(costs)
 
-    output = constrNM(model_performance, init_parameters, LB, UB, maxiter=6, full_output=True)
+    output = constrNM(model_performance, init_parameters, LB, UB, maxiter=25, full_output=True)
 
     with open('estimated_params.json', 'w') as f:
         json.dump(list(output['xopt']), f)
